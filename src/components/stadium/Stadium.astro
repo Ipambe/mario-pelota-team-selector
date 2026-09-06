@@ -1,0 +1,39 @@
+---
+interface Props {
+  teamNumber: 1 | 2
+}
+
+const { teamNumber } = Astro.props
+---
+
+<div class="stadium" id={`stadium-${teamNumber}`}>
+	<div class="field mowed-grass"></div>
+	<div class="in-field"></div>
+	<div class="in-field-grass mowed-grass"></div>
+	<div class="batting-circle"></div>
+	<div class="first-base base">
+		<div class="pulse"></div>
+		<div class="action-area"></div>
+	</div>
+	<div class="second-base base">
+		<div class="pulse"></div>
+		<div class="action-area"></div>
+	</div>
+	<div class="thrid-base base">
+		<div class="pulse"></div>
+		<div class="action-area"></div>
+	</div>
+	<div class="home-plate">
+		<div class="action-area"></div>
+	</div>
+	<div class="home-plate-pulse pulse"></div>
+	<div class="base-lines"></div>
+	<div class="pitchers-mound"></div>
+	<div class="pitchers-plate"></div>
+	<div class="first-circle half-circle"></div>
+	<div class="second-circle half-circle"></div>
+	<div class="third-circle half-circle"></div>
+	<div class="batters-box-right batters-box"></div>
+	<div class="batters-box-left batters-box"></div>
+	<div class="first-base-thing"></div>
+</div>

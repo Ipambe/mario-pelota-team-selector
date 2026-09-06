@@ -1,0 +1,42 @@
+export type BaseballPositionKey =
+  | 'P'
+  | 'K'
+  | 'FB'
+  | 'SB'
+  | 'SS'
+  | 'TB'
+  | 'LF'
+  | 'CF'
+  | 'RF'
+
+export interface CharacterItem {
+  id: number
+  name: string
+  src: string
+  variant?: string[]
+  selectedVariant?: string
+}
+
+// Alias for backwards compatibility
+export type Item = CharacterItem
+
+export type TeamRoster = Record<BaseballPositionKey, CharacterItem | null>
+
+// Alias for backwards compatibility
+export type TEAM = TeamRoster
+
+export interface PositionItem {
+  code: string
+  name: string
+}
+
+export interface VariantItem {
+  name: string
+  isDefault: boolean
+  characterSrc: string
+}
+
+export interface StadiumCoordinates {
+  top: number
+  left: number
+}
