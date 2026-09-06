@@ -84,4 +84,21 @@ describe('team logic', () => {
     assignPlayerToTeam(team, 'P', char0, 'RED')
     expect(team.P?.selectedVariant).toBe('RED')
   })
+
+  it('correctly assesses completion status across team 1 and team 2', () => {
+    const team1 = createEmptyTeam()
+    const team2 = createEmptyTeam()
+    const dummy: CharacterItem = { id: 99, name: 'Dummy', src: 'dummy.png' }
+
+    ;(['P', 'K', 'FB', 'SB', 'SS', 'TB', 'LF', 'CF', 'RF'] as const).forEach(
+      pos => {
+        assignPlayerToTeam(team1, pos, dummy)
+      }
+    )
+
+    expect(isTeamComplete(team1)).toBe(true)
+    expect(isTeamComplete(team2)).toBe(false)
+    expect(getAvailablePositions(team1, POSITIONS)).toHaveLength(0)
+    expect(getAvailablePositions(team2, POSITIONS)).toHaveLength(9)
+  })
 })

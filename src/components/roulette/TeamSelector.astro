@@ -1,10 +1,33 @@
 ---
 ---
 
-<div class="team-select-wrapper">
-	<label for="teamSelect" class="team-label">Equipo:</label>
-	<select id="teamSelect" class="team-select">
-		<option value="1">Equipo 1</option>
-		<option value="2">Equipo 2</option>
-	</select>
+<div class="team-switch-container">
+	<button
+		type="button"
+		id="teamLabel1"
+		class="team-switch-label active"
+		aria-pressed="true"
+	>
+		Equipo 1
+	</button>
+
+	<label class="switch-toggle team-switch-toggle" for="teamSwitch" title="Alternar entre Equipo 1 y Equipo 2">
+		<input
+			type="checkbox"
+			id="teamSwitch"
+			role="switch"
+			aria-label="Alternar entre Equipo 1 y Equipo 2"
+			aria-checked="false"
+		/>
+		<span class="switch-slider"></span>
+	</label>
+
+	<button
+		type="button"
+		id="teamLabel2"
+		class="team-switch-label"
+		aria-pressed="false"
+	>
+		Equipo 2
+	</button>
 </div>

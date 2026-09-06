@@ -19,10 +19,16 @@ import {
   WINNING_INDEX
 } from '../logic/roulette'
 import {
+  type GameSettings,
+  loadSettings,
+  saveSettings
+} from '../logic/settings'
+import {
   assignPlayerToTeam,
   createEmptyTeam,
   getAvailableCharacters,
-  getAvailablePositions
+  getAvailablePositions,
+  isTeamComplete
 } from '../logic/team'
 import type {
   BaseballPositionKey,
@@ -49,16 +55,57 @@ export class GameController {
   private spinBtn!: HTMLButtonElement
   private nextBtn!: HTMLButtonElement
   private resultElement!: HTMLElement
-  private teamSelect!: HTMLSelectElement | null
+
+  // Switch elements
+  private teamSwitch!: HTMLInputElement | null
+  private teamLabel1!: HTMLButtonElement | null
+  private teamLabel2!: HTMLButtonElement | null
+
+  // Settings & Modal elements
+  private settingsModal!: HTMLDialogElement | null
+  private openSettingsBtn!: HTMLButtonElement | null
+  private closeSettingsBtn!: HTMLButtonElement | null
+  private doneSettingsBtn!: HTMLButtonElement | null
+  private autoSelectSwitch!: HTMLInputElement | null
+
+  private settings: GameSettings = { autoSelect: false }
+  private isAutoSpinning = false
+  private autoSpinTimeoutId: number | null = null
+  private isReelSpinning = false
 
   public init(): void {
     this.reelElement = document.getElementById('reel') as HTMLDivElement
     this.spinBtn = document.getElementById('spinBtn') as HTMLButtonElement
     this.nextBtn = document.getElementById('nextBtn') as HTMLButtonElement
     this.resultElement = document.getElementById('result') as HTMLElement
-    this.teamSelect = document.getElementById(
-      'teamSelect'
-    ) as HTMLSelectElement | null
+
+    // Team Switch elements
+    this.teamSwitch = document.getElementById(
+      'teamSwitch'
+    ) as HTMLInputElement | null
+    this.teamLabel1 = document.getElementById(
+      'teamLabel1'
+    ) as HTMLButtonElement | null
+    this.teamLabel2 = document.getElementById(
+      'teamLabel2'
+    ) as HTMLButtonElement | null
+
+    // Settings Modal elements
+    this.settingsModal = document.getElementById(
+      'settingsModal'
+    ) as HTMLDialogElement | null
+    this.openSettingsBtn = document.getElementById(
+      'openSettingsBtn'
+    ) as HTMLButtonElement | null
+    this.closeSettingsBtn = document.getElementById(
+      'closeSettingsBtn'
+    ) as HTMLButtonElement | null
+    this.doneSettingsBtn = document.getElementById(
+      'doneSettingsBtn'
+    ) as HTMLButtonElement | null
+    this.autoSelectSwitch = document.getElementById(
+      'autoSelectSwitch'
+    ) as HTMLInputElement | null
 
     if (
       !this.reelElement ||
@@ -74,25 +121,154 @@ export class GameController {
     window.team1 = this.team1
     window.team2 = this.team2
 
-    this.spinBtn.addEventListener('click', () => this.spin())
-    this.nextBtn.addEventListener('click', () => {
-      if (this.currentNextAction) {
-        this.currentNextAction()
+    this.initSettings()
+    this.initTeamControls()
+
+    this.spinBtn.addEventListener('click', () => {
+      if (this.isAutoSpinning) {
+        this.stopAutoSpin()
+      } else {
+        this.resumeOrStartSpin()
       }
     })
 
-    if (this.teamSelect) {
-      this.teamSelect.addEventListener('change', () =>
-        this.resetRouletteForTeam()
-      )
-    }
+    this.nextBtn.addEventListener('click', () => {
+      this.resumeOrStartSpin()
+    })
 
     this.resetRouletteForTeam()
   }
 
+  private isAutoSelectEnabled(): boolean {
+    if (this.autoSelectSwitch) {
+      return this.autoSelectSwitch.checked
+    }
+    return this.settings.autoSelect
+  }
+
+  private initSettings(): void {
+    this.settings = loadSettings()
+
+    if (this.autoSelectSwitch) {
+      this.autoSelectSwitch.checked = this.settings.autoSelect
+
+      const syncSetting = () => {
+        const isChecked = this.autoSelectSwitch?.checked ?? false
+        this.settings.autoSelect = isChecked
+        saveSettings(this.settings)
+        if (!isChecked && this.isAutoSpinning) {
+          this.stopAutoSpin()
+        }
+      }
+
+      this.autoSelectSwitch.addEventListener('change', syncSetting)
+      this.autoSelectSwitch.addEventListener('input', syncSetting)
+    }
+
+    const closeAndSync = () => {
+      if (this.autoSelectSwitch) {
+        this.settings.autoSelect = this.autoSelectSwitch.checked
+        saveSettings(this.settings)
+      }
+      this.settingsModal?.close()
+    }
+
+    if (this.openSettingsBtn && this.settingsModal) {
+      this.openSettingsBtn.addEventListener('click', () => {
+        this.settingsModal?.showModal()
+      })
+    }
+
+    if (this.closeSettingsBtn && this.settingsModal) {
+      this.closeSettingsBtn.addEventListener('click', closeAndSync)
+    }
+
+    if (this.doneSettingsBtn && this.settingsModal) {
+      this.doneSettingsBtn.addEventListener('click', closeAndSync)
+    }
+
+    if (this.settingsModal) {
+      this.settingsModal.addEventListener('click', event => {
+        if (event.target === this.settingsModal) {
+          closeAndSync()
+        }
+      })
+    }
+  }
+
+  private initTeamControls(): void {
+    if (this.teamSwitch) {
+      this.teamSwitch.addEventListener('change', () => {
+        this.updateTeamSwitchUI()
+        this.resetRouletteForTeam()
+      })
+    }
+
+    if (this.teamLabel1) {
+      this.teamLabel1.addEventListener('click', () => {
+        if (!this.teamSwitch || this.teamSwitch.disabled) return
+        if (this.teamSwitch.checked) {
+          this.setTeam('1')
+        }
+      })
+    }
+
+    if (this.teamLabel2) {
+      this.teamLabel2.addEventListener('click', () => {
+        if (!this.teamSwitch || this.teamSwitch.disabled) return
+        if (!this.teamSwitch.checked) {
+          this.setTeam('2')
+        }
+      })
+    }
+
+    this.updateTeamSwitchUI()
+  }
+
+  private setTeam(teamNum: '1' | '2'): void {
+    if (!this.teamSwitch) return
+    this.teamSwitch.checked = teamNum === '2'
+    this.updateTeamSwitchUI()
+    this.resetRouletteForTeam()
+  }
+
+  private updateTeamSwitchUI(): void {
+    const isTeam2 = this.teamSwitch?.checked ?? false
+    if (this.teamSwitch) {
+      this.teamSwitch.setAttribute('aria-checked', isTeam2 ? 'true' : 'false')
+    }
+
+    if (this.teamLabel1) {
+      if (isTeam2) {
+        this.teamLabel1.classList.remove('active')
+        this.teamLabel1.setAttribute('aria-pressed', 'false')
+      } else {
+        this.teamLabel1.classList.add('active')
+        this.teamLabel1.setAttribute('aria-pressed', 'true')
+      }
+    }
+
+    if (this.teamLabel2) {
+      if (isTeam2) {
+        this.teamLabel2.classList.add('active')
+        this.teamLabel2.setAttribute('aria-pressed', 'true')
+      } else {
+        this.teamLabel2.classList.remove('active')
+        this.teamLabel2.setAttribute('aria-pressed', 'false')
+      }
+    }
+  }
+
+  private setTeamControlsDisabled(disabled: boolean): void {
+    if (this.teamSwitch) this.teamSwitch.disabled = disabled
+    if (this.teamLabel1) this.teamLabel1.disabled = disabled
+    if (this.teamLabel2) this.teamLabel2.disabled = disabled
+  }
+
   private getSelectedTeamInfo(): { value: string; team: TeamRoster } {
-    const value = this.teamSelect?.value ?? '1'
-    const team = value === '2' ? this.team2 : this.team1
+    const isTeam2 = this.teamSwitch?.checked ?? false
+    const value = isTeam2 ? '2' : '1'
+    const team = isTeam2 ? this.team2 : this.team1
     return { value, team }
   }
 
@@ -120,6 +296,7 @@ export class GameController {
   }
 
   private animateReel(cards: HTMLElement[], onFinish: () => void): void {
+    this.isReelSpinning = true
     this.reelElement.style.transition = 'none'
     this.reelElement.style.transform = 'translateX(0px)'
     this.reelElement.innerHTML = ''
@@ -136,8 +313,73 @@ export class GameController {
     })
 
     setTimeout(() => {
+      this.isReelSpinning = false
       onFinish()
     }, SPIN_DURATION_MS)
+  }
+
+  public resumeOrStartSpin(): void {
+    if (this.isAutoSelectEnabled()) {
+      this.isAutoSpinning = true
+      this.spinBtn.textContent = 'DETENER'
+      this.spinBtn.classList.add('stop-btn')
+      this.spinBtn.disabled = false
+      this.nextBtn.style.display = 'none'
+
+      if (this.currentNextAction) {
+        const action = this.currentNextAction
+        this.currentNextAction = null
+        action()
+      } else {
+        const { value: selectedTeamVal, team: targetTeam } =
+          this.getSelectedTeamInfo()
+        const otherTeamVal: '1' | '2' = selectedTeamVal === '1' ? '2' : '1'
+        const otherTeam = selectedTeamVal === '1' ? this.team2 : this.team1
+
+        if (isTeamComplete(targetTeam)) {
+          if (!isTeamComplete(otherTeam)) {
+            this.setTeam(otherTeamVal)
+          } else {
+            this.resultElement.textContent = "LO EQUIPO TAN' COMPLETO!"
+            this.stopAutoSpin()
+            return
+          }
+        }
+        this.spin()
+      }
+    } else {
+      if (this.currentNextAction) {
+        const action = this.currentNextAction
+        this.currentNextAction = null
+        this.nextBtn.style.display = 'none'
+        action()
+      } else {
+        this.spin()
+      }
+    }
+  }
+
+  public stopAutoSpin(): void {
+    if (this.autoSpinTimeoutId !== null) {
+      window.clearTimeout(this.autoSpinTimeoutId)
+      this.autoSpinTimeoutId = null
+    }
+
+    this.isAutoSpinning = false
+    this.spinBtn.textContent = 'Tirar'
+    this.spinBtn.classList.remove('stop-btn')
+
+    if (this.isReelSpinning) {
+      this.spinBtn.disabled = true
+    } else {
+      this.setTeamControlsDisabled(false)
+      const { team } = this.getSelectedTeamInfo()
+      if (isTeamComplete(team) && !this.currentNextAction) {
+        this.spinBtn.disabled = true
+      } else {
+        this.spinBtn.disabled = false
+      }
+    }
   }
 
   private finalizePlayerAssignment(
@@ -161,11 +403,51 @@ export class GameController {
 
     this.nextBtn.style.display = 'none'
     this.nextBtn.disabled = false
-    this.spinBtn.disabled = false
     this.currentNextAction = null
 
-    if (this.teamSelect) {
-      this.teamSelect.disabled = false
+    if (this.isAutoSpinning) {
+      this.handleAutoSpinNextStep(selectedTeamVal, targetTeam)
+    } else {
+      this.spinBtn.disabled = false
+      this.setTeamControlsDisabled(false)
+    }
+  }
+
+  private handleAutoSpinNextStep(
+    currentTeamVal: string,
+    currentTeam: TeamRoster
+  ): void {
+    if (!this.isAutoSpinning) return
+
+    const remainingPositions = getAvailablePositions(currentTeam, POSITIONS)
+    if (remainingPositions.length > 0) {
+      // Continue spinning for current team
+      this.autoSpinTimeoutId = window.setTimeout(() => {
+        if (this.isAutoSpinning) {
+          this.spin()
+        }
+      }, 1000)
+    } else {
+      // Current team is complete! Check the other team:
+      const otherTeamVal: '1' | '2' = currentTeamVal === '1' ? '2' : '1'
+      const otherTeam = currentTeamVal === '1' ? this.team2 : this.team1
+      const otherTeamPositions = getAvailablePositions(otherTeam, POSITIONS)
+
+      if (otherTeamPositions.length > 0) {
+        this.resultElement.textContent = `¡EQUIPO ${currentTeamVal} COMPLETO! CAMBIANDO AL EQUIPO ${otherTeamVal}...`
+        this.autoSpinTimeoutId = window.setTimeout(() => {
+          if (!this.isAutoSpinning) return
+          this.setTeam(otherTeamVal)
+          this.autoSpinTimeoutId = window.setTimeout(() => {
+            if (this.isAutoSpinning) {
+              this.spin()
+            }
+          }, 1200)
+        }, 1500)
+      } else {
+        this.resultElement.textContent = "LO EQUIPO TAN' COMPLETO!"
+        this.stopAutoSpin()
+      }
     }
   }
 
@@ -173,23 +455,42 @@ export class GameController {
     const { value: selectedTeamVal, team: targetTeam } =
       this.getSelectedTeamInfo()
     const availablePositions = getAvailablePositions(targetTeam, POSITIONS)
+    const otherTeam = selectedTeamVal === '1' ? this.team2 : this.team1
 
     if (availablePositions.length === 0) {
       this.resultElement.textContent = `¡EL EQUIPO ${selectedTeamVal} YA ESTÁ COMPLETO!`
+      if (this.isAutoSpinning) {
+        if (!isTeamComplete(otherTeam)) {
+          this.handleAutoSpinNextStep(selectedTeamVal, targetTeam)
+        } else {
+          this.stopAutoSpin()
+        }
+      }
       return
     }
 
     const availableCharacters = getAvailableCharacters(targetTeam, CHARACTERS)
     if (availableCharacters.length === 0) {
       this.resultElement.textContent = `¡NO HAY MÁS PERSONAJES DISPONIBLES PARA EL EQUIPO ${selectedTeamVal}!`
+      if (this.isAutoSpinning) {
+        if (!isTeamComplete(otherTeam)) {
+          this.handleAutoSpinNextStep(selectedTeamVal, targetTeam)
+        } else {
+          this.stopAutoSpin()
+        }
+      }
       return
     }
 
-    if (this.teamSelect) {
-      this.teamSelect.disabled = true
+    this.setTeamControlsDisabled(true)
+
+    if (this.isAutoSpinning) {
+      this.spinBtn.disabled = false
+      this.spinBtn.textContent = 'DETENER'
+    } else {
+      this.spinBtn.disabled = true
     }
 
-    this.spinBtn.disabled = true
     this.nextBtn.style.display = 'none'
     this.currentWinningCharacter = null
     this.currentWinningVariant = null
@@ -208,10 +509,20 @@ export class GameController {
       const remainingPositions = getAvailablePositions(targetTeam, POSITIONS)
 
       if (winningItem.variant && winningItem.variant.length > 0) {
-        this.currentNextAction = () => this.spinVariant()
-        this.nextBtn.style.display = 'inline-block'
-        this.nextBtn.disabled = false
-        this.spinBtn.disabled = false
+        if (this.isAutoSpinning) {
+          this.autoSpinTimeoutId = window.setTimeout(() => {
+            if (this.isAutoSpinning) {
+              this.spinVariant()
+            }
+          }, 900)
+        } else {
+          this.currentNextAction = () => this.spinVariant()
+          this.nextBtn.style.display = 'inline-block'
+          this.nextBtn.disabled = false
+          this.spinBtn.disabled = false
+          this.spinBtn.textContent = 'Tirar'
+          this.spinBtn.classList.remove('stop-btn')
+        }
       } else if (remainingPositions.length === 1 && remainingPositions[0]) {
         this.finalizePlayerAssignment(
           winningItem,
@@ -221,10 +532,20 @@ export class GameController {
           targetTeam
         )
       } else {
-        this.currentNextAction = () => this.spinPosition()
-        this.nextBtn.style.display = 'inline-block'
-        this.nextBtn.disabled = false
-        this.spinBtn.disabled = false
+        if (this.isAutoSpinning) {
+          this.autoSpinTimeoutId = window.setTimeout(() => {
+            if (this.isAutoSpinning) {
+              this.spinPosition()
+            }
+          }, 900)
+        } else {
+          this.currentNextAction = () => this.spinPosition()
+          this.nextBtn.style.display = 'inline-block'
+          this.nextBtn.disabled = false
+          this.spinBtn.disabled = false
+          this.spinBtn.textContent = 'Tirar'
+          this.spinBtn.classList.remove('stop-btn')
+        }
       }
     })
   }
@@ -236,12 +557,16 @@ export class GameController {
       return
     }
 
-    if (this.teamSelect) {
-      this.teamSelect.disabled = true
+    this.setTeamControlsDisabled(true)
+
+    if (this.isAutoSpinning) {
+      this.spinBtn.disabled = false
+      this.spinBtn.textContent = 'DETENER'
+    } else {
+      this.spinBtn.disabled = true
     }
 
     this.nextBtn.disabled = true
-    this.spinBtn.disabled = true
     this.resultElement.textContent = ''
 
     const generatedVariants = generateVariantReel(character, variants)
@@ -269,10 +594,20 @@ export class GameController {
           targetTeam
         )
       } else {
-        this.currentNextAction = () => this.spinPosition()
-        this.nextBtn.style.display = 'inline-block'
-        this.nextBtn.disabled = false
-        this.spinBtn.disabled = false
+        if (this.isAutoSpinning) {
+          this.autoSpinTimeoutId = window.setTimeout(() => {
+            if (this.isAutoSpinning) {
+              this.spinPosition()
+            }
+          }, 900)
+        } else {
+          this.currentNextAction = () => this.spinPosition()
+          this.nextBtn.style.display = 'inline-block'
+          this.nextBtn.disabled = false
+          this.spinBtn.disabled = false
+          this.spinBtn.textContent = 'Tirar'
+          this.spinBtn.classList.remove('stop-btn')
+        }
       }
     })
   }
@@ -290,18 +625,23 @@ export class GameController {
       this.nextBtn.style.display = 'none'
       this.spinBtn.disabled = false
       this.currentNextAction = null
-      if (this.teamSelect) {
-        this.teamSelect.disabled = false
+      this.setTeamControlsDisabled(false)
+      if (this.isAutoSpinning) {
+        this.stopAutoSpin()
       }
       return
     }
 
-    if (this.teamSelect) {
-      this.teamSelect.disabled = true
+    this.setTeamControlsDisabled(true)
+
+    if (this.isAutoSpinning) {
+      this.spinBtn.disabled = false
+      this.spinBtn.textContent = 'DETENER'
+    } else {
+      this.spinBtn.disabled = true
     }
 
     this.nextBtn.disabled = true
-    this.spinBtn.disabled = true
     this.resultElement.textContent = ''
 
     const generatedPositions = generatePositionReel(availablePositions)
@@ -331,8 +671,8 @@ export class GameController {
     this.nextBtn.disabled = false
     this.resultElement.textContent = ''
 
-    if (this.teamSelect) {
-      this.teamSelect.disabled = false
+    if (!this.isAutoSpinning) {
+      this.setTeamControlsDisabled(false)
     }
 
     // Highlight active stadium
@@ -368,7 +708,9 @@ export class GameController {
       return
     }
 
-    this.spinBtn.disabled = false
+    if (!this.isAutoSpinning) {
+      this.spinBtn.disabled = false
+    }
 
     // Initial preview reel
     const previewItems = generateCharacterReel(availableCharacters, 10)

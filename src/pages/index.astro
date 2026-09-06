@@ -3,11 +3,13 @@ import Controls from '../components/roulette/Controls.astro'
 import Roulette from '../components/roulette/Roulette.astro'
 import TeamSelector from '../components/roulette/TeamSelector.astro'
 import Stadium from '../components/stadium/Stadium.astro'
+import SettingsModal from '../components/ui/SettingsModal.astro'
 import VersusBanner from '../components/ui/VersusBanner.astro'
 import Layout from '../layouts/Layout.astro'
 ---
 
 <Layout>
+	<SettingsModal />
 	<section class="header">
 		<Stadium teamNumber={1} />
 		<VersusBanner />
