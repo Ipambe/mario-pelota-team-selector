@@ -13,6 +13,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@astrojs/sitemap": "^3.7.4",
     "astro": "^7.3.1"
   },
   "allowScripts": {
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.12",
+    "sharp": "^0.35.4",
     "vitest": "^5.0.0"
   }
 }

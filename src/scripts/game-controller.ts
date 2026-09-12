@@ -15,6 +15,7 @@ import {
   generateCharacterReel,
   generatePositionReel,
   generateVariantReel,
+  ITEM_WIDTH,
   SPIN_DURATION_MS,
   WINNING_INDEX
 } from '../logic/roulette'
@@ -72,6 +73,8 @@ export class GameController {
   private isAutoSpinning = false
   private autoSpinTimeoutId: number | null = null
   private isReelSpinning = false
+  private idleStartTimeoutId: number | null = null
+  private idleAnimation: Animation | null = null
 
   public init(): void {
     this.reelElement = document.getElementById('reel') as HTMLDivElement
@@ -295,10 +298,86 @@ export class GameController {
     stadium.appendChild(token)
   }
 
+  private stopIdleAnimation(): void {
+    if (this.idleStartTimeoutId !== null) {
+      window.clearTimeout(this.idleStartTimeoutId)
+      this.idleStartTimeoutId = null
+    }
+
+    if (this.idleAnimation) {
+      this.idleAnimation.cancel()
+      this.idleAnimation = null
+    }
+
+    this.reelElement.classList.remove('idle-spinning')
+    this.reelElement.style.animation = ''
+    this.reelElement.style.transition = 'none'
+    this.reelElement.style.transform = 'translate3d(0px, 0, 0)'
+  }
+
+  private startIdleAnimation(): void {
+    if (this.isReelSpinning || this.isAutoSpinning || this.currentNextAction) {
+      return
+    }
+
+    const { team: targetTeam } = this.getSelectedTeamInfo()
+    const availablePositions = getAvailablePositions(targetTeam, POSITIONS)
+    const availableCharacters = getAvailableCharacters(targetTeam, CHARACTERS)
+
+    if (availablePositions.length === 0 || availableCharacters.length === 0) {
+      return
+    }
+
+    this.stopIdleAnimation()
+
+    let block = [...availableCharacters]
+    while (block.length < 10) {
+      block = [...block, ...availableCharacters]
+    }
+
+    const singleBlockWidth = block.length * ITEM_WIDTH
+    const idleDurationMs = (singleBlockWidth / 60) * 1000
+
+    this.reelElement.style.transition = 'none'
+    this.reelElement.style.animation = ''
+    this.reelElement.style.transform = ''
+    this.reelElement.innerHTML = ''
+
+    const totalItems = [...block, ...block]
+    totalItems.forEach(item => {
+      this.reelElement.appendChild(createItemCard(item))
+    })
+
+    if (typeof this.reelElement.animate === 'function') {
+      this.idleAnimation = this.reelElement.animate(
+        [
+          { transform: 'translate3d(0px, 0, 0)' },
+          { transform: `translate3d(-${singleBlockWidth}px, 0, 0)` }
+        ],
+        {
+          duration: idleDurationMs,
+          iterations: Infinity,
+          easing: 'linear'
+        }
+      )
+    } else {
+      this.reelElement.style.setProperty(
+        '--idle-distance',
+        `-${singleBlockWidth}px`
+      )
+      this.reelElement.style.setProperty(
+        '--idle-duration',
+        `${idleDurationMs / 1000}s`
+      )
+      this.reelElement.classList.add('idle-spinning')
+    }
+  }
+
   private animateReel(cards: HTMLElement[], onFinish: () => void): void {
+    this.stopIdleAnimation()
     this.isReelSpinning = true
     this.reelElement.style.transition = 'none'
-    this.reelElement.style.transform = 'translateX(0px)'
+    this.reelElement.style.transform = 'translate3d(0px, 0, 0)'
     this.reelElement.innerHTML = ''
 
     cards.forEach(card => {
@@ -306,10 +385,11 @@ export class GameController {
     })
 
     const targetX = calculateReelTargetOffset(WINNING_INDEX)
+    void this.reelElement.offsetHeight
 
     requestAnimationFrame(() => {
       this.reelElement.style.transition = `transform ${SPIN_DURATION_MS / 1000}s cubic-bezier(0.12, 0.8, 0.15, 1)`
-      this.reelElement.style.transform = `translateX(-${targetX}px)`
+      this.reelElement.style.transform = `translate3d(-${targetX}px, 0, 0)`
     })
 
     setTimeout(() => {
@@ -319,6 +399,7 @@ export class GameController {
   }
 
   public resumeOrStartSpin(): void {
+    this.stopIdleAnimation()
     if (this.isAutoSelectEnabled()) {
       this.isAutoSpinning = true
       this.spinBtn.textContent = 'DETENER'
@@ -378,6 +459,9 @@ export class GameController {
         this.spinBtn.disabled = true
       } else {
         this.spinBtn.disabled = false
+        if (!this.currentNextAction) {
+          this.startIdleAnimation()
+        }
       }
     }
   }
@@ -410,6 +494,18 @@ export class GameController {
     } else {
       this.spinBtn.disabled = false
       this.setTeamControlsDisabled(false)
+      const remainingPositions = getAvailablePositions(targetTeam, POSITIONS)
+      if (remainingPositions.length > 0) {
+        this.idleStartTimeoutId = window.setTimeout(() => {
+          if (
+            !this.isReelSpinning &&
+            !this.isAutoSpinning &&
+            !this.currentNextAction
+          ) {
+            this.startIdleAnimation()
+          }
+        }, 1800)
+      }
     }
   }
 
@@ -452,6 +548,7 @@ export class GameController {
   }
 
   public spin(): void {
+    this.stopIdleAnimation()
     const { value: selectedTeamVal, team: targetTeam } =
       this.getSelectedTeamInfo()
     const availablePositions = getAvailablePositions(targetTeam, POSITIONS)
@@ -661,6 +758,8 @@ export class GameController {
   }
 
   public resetRouletteForTeam(): void {
+    this.stopIdleAnimation()
+
     const { value: selectedTeamVal, team: targetTeam } =
       this.getSelectedTeamInfo()
 
@@ -690,7 +789,7 @@ export class GameController {
 
     // Reset reel visually
     this.reelElement.style.transition = 'none'
-    this.reelElement.style.transform = 'translateX(0px)'
+    this.reelElement.style.transform = 'translate3d(0px, 0, 0)'
     this.reelElement.innerHTML = ''
 
     const availablePositions = getAvailablePositions(targetTeam, POSITIONS)
@@ -710,13 +809,8 @@ export class GameController {
 
     if (!this.isAutoSpinning) {
       this.spinBtn.disabled = false
+      this.startIdleAnimation()
     }
-
-    // Initial preview reel
-    const previewItems = generateCharacterReel(availableCharacters, 10)
-    previewItems.forEach(item => {
-      this.reelElement.appendChild(createItemCard(item))
-    })
   }
 }
 

@@ -14,6 +14,10 @@ export function createItemCard(item: CharacterItem): HTMLDivElement {
   image.src = item.src
   image.alt = item.name
   image.className = 'card-image'
+  image.loading = 'eager'
+  image.decoding = 'async'
+  image.width = 160
+  image.height = 160
 
   card.appendChild(image)
   return card
@@ -28,6 +32,10 @@ export function createVariantCard(item: VariantItem): HTMLDivElement {
     image.src = item.characterSrc
     image.alt = item.name
     image.className = 'card-image'
+    image.loading = 'eager'
+    image.decoding = 'async'
+    image.width = 160
+    image.height = 160
     card.appendChild(image)
   } else {
     card.classList.add('variant-color-card')
@@ -77,6 +85,10 @@ export function createPlayerToken(
   img.src = item.src
   img.alt = item.name
   img.className = 'player-token-img'
+  img.loading = 'eager'
+  img.decoding = 'async'
+  img.width = 56
+  img.height = 56
 
   const tooltip = document.createElement('div')
   tooltip.className = 'player-tooltip'

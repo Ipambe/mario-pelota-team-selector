@@ -9,18 +9,25 @@ import Layout from '../layouts/Layout.astro'
 ---
 
 <Layout>
+	<h1 class="sr-only">Mario Pelota Team Selector - Ruleta de Equipos de Mario Superstar Baseball</h1>
 	<SettingsModal />
-	<section class="header">
-		<Stadium teamNumber={1} />
-		<VersusBanner />
-		<Stadium teamNumber={2} />
-	</section>
+	<main id="main-content">
+		<header class="header">
+			<Stadium teamNumber={1} />
+			<VersusBanner />
+			<Stadium teamNumber={2} />
+		</header>
 
-	<section class="char-select">
-		<TeamSelector />
-		<Roulette />
-		<Controls />
-	</section>
+		<section class="char-select" aria-label="Ruleta y selector de personajes">
+			<TeamSelector />
+			<Roulette />
+			<Controls />
+		</section>
+	</main>
+
+	<footer class="app-footer">
+		<p>Mario Pelota Team Selector &bull; Proyecto Fan-Made no oficial.</p>
+	</footer>
 </Layout>
 
 <script>

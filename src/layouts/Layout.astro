@@ -1,17 +1,79 @@
 ---
 import '../styles/global.css'
 import '../styles/stadium.css'
+
+interface Props {
+  title?: string
+  description?: string
+  image?: string
+}
+
+const {
+  title = 'Mario Pelota Team Selector | Ruleta de Equipos de Mario Superstar Baseball',
+  description = 'Selector aleatorio y ruleta de equipos y alineaciones para Mario Superstar Baseball. Sortea personajes, variantes de color y posiciones en el estadio de forma automática o manual.',
+  image = 'https://ipambe.github.io/mario-pelota-team-selector/images/mario.webp'
+} = Astro.props
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site)
+const siteUrl = 'https://ipambe.github.io/mario-pelota-team-selector/'
+
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'Mario Pelota Team Selector',
+  url: siteUrl,
+  description: description,
+  applicationCategory: 'GameApplication',
+  genre: 'Sports / Baseball / Team Selector',
+  browserRequirements: 'Requires JavaScript. Requires HTML5.',
+  operatingSystem: 'All',
+  inLanguage: 'es',
+  isAccessibleForFree: true,
+  author: {
+    '@type': 'Person',
+    name: 'Ipambe'
+  }
+}
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="es">
 	<head>
 		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="icon" type="image/svg+xml" href="/mario-pelota-team-selector/favicon.svg" />
 		<link rel="icon" href="/mario-pelota-team-selector/favicon.ico" />
+		<link rel="manifest" href="/mario-pelota-team-selector/site.webmanifest" />
+		<link rel="canonical" href={canonicalURL} />
 		<meta name="generator" content={Astro.generator} />
-		<title>Mario Pelota Team Selector</title>
+
+		<!-- Primary Meta Tags -->
+		<title>{title}</title>
+		<meta name="title" content={title} />
+		<meta name="description" content={description} />
+		<meta name="keywords" content="mario pelota, mario superstar baseball, team selector, ruleta de equipos, selector de equipos, mario baseball alineaciones, nintendo baseball selector" />
+		<meta name="author" content="Ipambe" />
+		<meta name="robots" content="index, follow" />
+		<meta name="theme-color" content="#121418" />
+
+		<!-- Open Graph / Facebook / WhatsApp / Discord -->
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content={canonicalURL} />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:image" content={image} />
+		<meta property="og:site_name" content="Mario Pelota Team Selector" />
+		<meta property="og:locale" content="es_DO" />
+
+		<!-- Twitter / X -->
+		<meta property="twitter:card" content="summary_large_image" />
+		<meta property="twitter:url" content={canonicalURL} />
+		<meta property="twitter:title" content={title} />
+		<meta property="twitter:description" content={description} />
+		<meta property="twitter:image" content={image} />
+
+		<!-- Structured Data (JSON-LD) -->
+		<script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
 	</head>
 	<body>
 		<slot />

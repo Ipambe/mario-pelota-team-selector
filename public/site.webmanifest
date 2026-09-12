@@ -1,0 +1,16 @@
+{
+  "name": "Mario Pelota Team Selector",
+  "short_name": "Mario Pelota",
+  "description": "Selector y ruleta de equipos y alineaciones para Mario Superstar Baseball.",
+  "start_url": "/mario-pelota-team-selector/",
+  "display": "standalone",
+  "background_color": "#121418",
+  "theme_color": "#121418",
+  "icons": [
+    {
+      "src": "/mario-pelota-team-selector/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

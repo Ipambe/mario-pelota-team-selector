@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ipambe.github.io/mario-pelota-team-selector/sitemap-index.xml
