@@ -1,6 +1,7 @@
+import { shuffle } from '../logic/roulette'
 import type { CharacterItem } from '../types/game'
 
-export const CHARACTERS: CharacterItem[] = [
+const RAW_CHARACTERS: CharacterItem[] = [
   {
     name: 'El dueño',
     src: '/mario-pelota-team-selector/images/mario.webp',
@@ -12,7 +13,7 @@ export const CHARACTERS: CharacterItem[] = [
     id: 1
   },
   {
-    name: 'Guario',
+    name: 'EL SULTAN',
     src: '/mario-pelota-team-selector/images/wario.webp',
     id: 2
   },
@@ -167,3 +168,5 @@ export const CHARACTERS: CharacterItem[] = [
     id: 31
   }
 ]
+
+export const CHARACTERS: CharacterItem[] = shuffle(RAW_CHARACTERS)

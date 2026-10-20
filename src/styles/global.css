@@ -266,7 +266,6 @@ body {
 	text-align: center;
 	user-select: none;
 	contain: layout paint;
-	transform: translateZ(0);
 }
 
 .card-image {
@@ -429,6 +428,16 @@ body {
 	transform: scale(0.95);
 }
 
+.settings-fab:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+	pointer-events: none;
+	transform: none;
+	box-shadow: none;
+	border-color: #4a4d55;
+	color: #4a4d55;
+}
+
 .settings-icon {
 	width: 26px;
 	height: 26px;
@@ -446,9 +455,12 @@ body {
 }
 
 .settings-dialog::backdrop {
-	background-color: rgba(0, 0, 0, 0.75);
-	backdrop-filter: blur(5px);
+	background-color: rgba(10, 12, 16, 0.85);
 	animation: fadeInBackdrop 0.2s ease;
+}
+
+body:has(dialog[open]) .pulse {
+	animation-play-state: paused;
 }
 
 .settings-modal-content {

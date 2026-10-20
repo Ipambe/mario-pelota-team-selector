@@ -17,6 +17,7 @@ import {
   generateVariantReel,
   ITEM_WIDTH,
   SPIN_DURATION_MS,
+  shuffle,
   WINNING_INDEX
 } from '../logic/roulette'
 import {
@@ -54,7 +55,7 @@ export class GameController {
 
   private reelElement!: HTMLDivElement
   private spinBtn!: HTMLButtonElement
-  private nextBtn!: HTMLButtonElement
+  private nextBtn: HTMLButtonElement | null = null
   private resultElement!: HTMLElement
 
   // Switch elements
@@ -79,7 +80,9 @@ export class GameController {
   public init(): void {
     this.reelElement = document.getElementById('reel') as HTMLDivElement
     this.spinBtn = document.getElementById('spinBtn') as HTMLButtonElement
-    this.nextBtn = document.getElementById('nextBtn') as HTMLButtonElement
+    this.nextBtn = document.getElementById(
+      'nextBtn'
+    ) as HTMLButtonElement | null
     this.resultElement = document.getElementById('result') as HTMLElement
 
     // Team Switch elements
@@ -110,12 +113,7 @@ export class GameController {
       'autoSelectSwitch'
     ) as HTMLInputElement | null
 
-    if (
-      !this.reelElement ||
-      !this.spinBtn ||
-      !this.nextBtn ||
-      !this.resultElement
-    ) {
+    if (!this.reelElement || !this.spinBtn || !this.resultElement) {
       console.warn('GameController: Required DOM elements missing.')
       return
     }
@@ -135,9 +133,11 @@ export class GameController {
       }
     })
 
-    this.nextBtn.addEventListener('click', () => {
-      this.resumeOrStartSpin()
-    })
+    if (this.nextBtn) {
+      this.nextBtn.addEventListener('click', () => {
+        this.resumeOrStartSpin()
+      })
+    }
 
     this.resetRouletteForTeam()
   }
@@ -165,7 +165,6 @@ export class GameController {
       }
 
       this.autoSelectSwitch.addEventListener('change', syncSetting)
-      this.autoSelectSwitch.addEventListener('input', syncSetting)
     }
 
     const closeAndSync = () => {
@@ -174,10 +173,25 @@ export class GameController {
         saveSettings(this.settings)
       }
       this.settingsModal?.close()
+      if (
+        !this.isReelSpinning &&
+        !this.isAutoSpinning &&
+        !this.currentNextAction
+      ) {
+        this.startIdleAnimation()
+      }
     }
 
     if (this.openSettingsBtn && this.settingsModal) {
       this.openSettingsBtn.addEventListener('click', () => {
+        if (
+          this.isReelSpinning ||
+          this.isAutoSpinning ||
+          this.openSettingsBtn?.disabled
+        ) {
+          return
+        }
+        this.stopIdleAnimation()
         this.settingsModal?.showModal()
       })
     }
@@ -266,6 +280,7 @@ export class GameController {
     if (this.teamSwitch) this.teamSwitch.disabled = disabled
     if (this.teamLabel1) this.teamLabel1.disabled = disabled
     if (this.teamLabel2) this.teamLabel2.disabled = disabled
+    if (this.openSettingsBtn) this.openSettingsBtn.disabled = disabled
   }
 
   private getSelectedTeamInfo(): { value: string; team: TeamRoster } {
@@ -330,9 +345,9 @@ export class GameController {
 
     this.stopIdleAnimation()
 
-    let block = [...availableCharacters]
+    let block = shuffle(availableCharacters)
     while (block.length < 10) {
-      block = [...block, ...availableCharacters]
+      block = [...block, ...shuffle(availableCharacters)]
     }
 
     const singleBlockWidth = block.length * ITEM_WIDTH
@@ -343,10 +358,12 @@ export class GameController {
     this.reelElement.style.transform = ''
     this.reelElement.innerHTML = ''
 
+    const fragment = document.createDocumentFragment()
     const totalItems = [...block, ...block]
     totalItems.forEach(item => {
-      this.reelElement.appendChild(createItemCard(item))
+      fragment.appendChild(createItemCard(item))
     })
+    this.reelElement.appendChild(fragment)
 
     if (typeof this.reelElement.animate === 'function') {
       this.idleAnimation = this.reelElement.animate(
@@ -380,16 +397,19 @@ export class GameController {
     this.reelElement.style.transform = 'translate3d(0px, 0, 0)'
     this.reelElement.innerHTML = ''
 
+    const fragment = document.createDocumentFragment()
     cards.forEach(card => {
-      this.reelElement.appendChild(card)
+      fragment.appendChild(card)
     })
+    this.reelElement.appendChild(fragment)
 
     const targetX = calculateReelTargetOffset(WINNING_INDEX)
-    void this.reelElement.offsetHeight
 
     requestAnimationFrame(() => {
-      this.reelElement.style.transition = `transform ${SPIN_DURATION_MS / 1000}s cubic-bezier(0.12, 0.8, 0.15, 1)`
-      this.reelElement.style.transform = `translate3d(-${targetX}px, 0, 0)`
+      requestAnimationFrame(() => {
+        this.reelElement.style.transition = `transform ${SPIN_DURATION_MS / 1000}s cubic-bezier(0.12, 0.8, 0.15, 1)`
+        this.reelElement.style.transform = `translate3d(-${targetX}px, 0, 0)`
+      })
     })
 
     setTimeout(() => {
@@ -404,8 +424,9 @@ export class GameController {
       this.isAutoSpinning = true
       this.spinBtn.textContent = 'DETENER'
       this.spinBtn.classList.add('stop-btn')
+      this.spinBtn.classList.remove('next-btn')
       this.spinBtn.disabled = false
-      this.nextBtn.style.display = 'none'
+      if (this.nextBtn) this.nextBtn.style.display = 'none'
 
       if (this.currentNextAction) {
         const action = this.currentNextAction
@@ -432,7 +453,7 @@ export class GameController {
       if (this.currentNextAction) {
         const action = this.currentNextAction
         this.currentNextAction = null
-        this.nextBtn.style.display = 'none'
+        if (this.nextBtn) this.nextBtn.style.display = 'none'
         action()
       } else {
         this.spin()
@@ -447,7 +468,13 @@ export class GameController {
     }
 
     this.isAutoSpinning = false
-    this.spinBtn.textContent = 'Tirar'
+    if (this.currentNextAction) {
+      this.spinBtn.textContent = 'Siguiente'
+      this.spinBtn.classList.add('next-btn')
+    } else {
+      this.spinBtn.textContent = 'Tirar'
+      this.spinBtn.classList.remove('next-btn')
+    }
     this.spinBtn.classList.remove('stop-btn')
 
     if (this.isReelSpinning) {
@@ -485,9 +512,14 @@ export class GameController {
       this.updateStadiumField(selectedTeamVal, teamKey, character, variantText)
     }
 
-    this.nextBtn.style.display = 'none'
-    this.nextBtn.disabled = false
+    if (this.nextBtn) {
+      this.nextBtn.style.display = 'none'
+      this.nextBtn.disabled = false
+    }
     this.currentNextAction = null
+    this.spinBtn.textContent = 'Tirar'
+    this.spinBtn.classList.remove('next-btn')
+    this.spinBtn.classList.remove('stop-btn')
 
     if (this.isAutoSpinning) {
       this.handleAutoSpinNextStep(selectedTeamVal, targetTeam)
@@ -504,7 +536,7 @@ export class GameController {
           ) {
             this.startIdleAnimation()
           }
-        }, 1800)
+        }, 5000)
       }
     }
   }
@@ -588,10 +620,11 @@ export class GameController {
       this.spinBtn.disabled = true
     }
 
-    this.nextBtn.style.display = 'none'
+    if (this.nextBtn) this.nextBtn.style.display = 'none'
     this.currentWinningCharacter = null
     this.currentWinningVariant = null
     this.currentNextAction = null
+    this.spinBtn.classList.remove('next-btn')
     this.resultElement.textContent = ''
 
     const generatedItems = generateCharacterReel(availableCharacters)
@@ -614,10 +647,10 @@ export class GameController {
           }, 900)
         } else {
           this.currentNextAction = () => this.spinVariant()
-          this.nextBtn.style.display = 'inline-block'
-          this.nextBtn.disabled = false
+          if (this.nextBtn) this.nextBtn.style.display = 'none'
           this.spinBtn.disabled = false
-          this.spinBtn.textContent = 'Tirar'
+          this.spinBtn.textContent = 'Siguiente'
+          this.spinBtn.classList.add('next-btn')
           this.spinBtn.classList.remove('stop-btn')
         }
       } else if (remainingPositions.length === 1 && remainingPositions[0]) {
@@ -637,10 +670,10 @@ export class GameController {
           }, 900)
         } else {
           this.currentNextAction = () => this.spinPosition()
-          this.nextBtn.style.display = 'inline-block'
-          this.nextBtn.disabled = false
+          if (this.nextBtn) this.nextBtn.style.display = 'none'
           this.spinBtn.disabled = false
-          this.spinBtn.textContent = 'Tirar'
+          this.spinBtn.textContent = 'Siguiente'
+          this.spinBtn.classList.add('next-btn')
           this.spinBtn.classList.remove('stop-btn')
         }
       }
@@ -663,7 +696,7 @@ export class GameController {
       this.spinBtn.disabled = true
     }
 
-    this.nextBtn.disabled = true
+    if (this.nextBtn) this.nextBtn.disabled = true
     this.resultElement.textContent = ''
 
     const generatedVariants = generateVariantReel(character, variants)
@@ -699,10 +732,10 @@ export class GameController {
           }, 900)
         } else {
           this.currentNextAction = () => this.spinPosition()
-          this.nextBtn.style.display = 'inline-block'
-          this.nextBtn.disabled = false
+          if (this.nextBtn) this.nextBtn.style.display = 'none'
           this.spinBtn.disabled = false
-          this.spinBtn.textContent = 'Tirar'
+          this.spinBtn.textContent = 'Siguiente'
+          this.spinBtn.classList.add('next-btn')
           this.spinBtn.classList.remove('stop-btn')
         }
       }
@@ -719,7 +752,7 @@ export class GameController {
 
     if (availablePositions.length === 0) {
       this.resultElement.textContent = `¡EL EQUIPO ${selectedTeamVal} YA ESTÁ COMPLETO!`
-      this.nextBtn.style.display = 'none'
+      if (this.nextBtn) this.nextBtn.style.display = 'none'
       this.spinBtn.disabled = false
       this.currentNextAction = null
       this.setTeamControlsDisabled(false)
@@ -738,7 +771,7 @@ export class GameController {
       this.spinBtn.disabled = true
     }
 
-    this.nextBtn.disabled = true
+    if (this.nextBtn) this.nextBtn.disabled = true
     this.resultElement.textContent = ''
 
     const generatedPositions = generatePositionReel(availablePositions)
@@ -766,8 +799,13 @@ export class GameController {
     this.currentWinningCharacter = null
     this.currentWinningVariant = null
     this.currentNextAction = null
-    this.nextBtn.style.display = 'none'
-    this.nextBtn.disabled = false
+    if (this.nextBtn) {
+      this.nextBtn.style.display = 'none'
+      this.nextBtn.disabled = false
+    }
+    this.spinBtn.textContent = 'Tirar'
+    this.spinBtn.classList.remove('next-btn')
+    this.spinBtn.classList.remove('stop-btn')
     this.resultElement.textContent = ''
 
     if (!this.isAutoSpinning) {

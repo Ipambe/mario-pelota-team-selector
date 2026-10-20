@@ -33,12 +33,12 @@ export const POSITION_COORDINATES: Record<
   StadiumCoordinates
 > = {
   P: { top: 460, left: 410 },
-  K: { top: 670, left: 410 },
+  K: { top: 690, left: 410 },
   FB: { top: 350, left: 645 },
   SB: { top: 230, left: 520 },
   TB: { top: 350, left: 175 },
   SS: { top: 230, left: 300 },
-  LF: { top: 140, left: 110 },
-  CF: { top: 65, left: 410 },
-  RF: { top: 140, left: 717 }
+  LF: { top: 170, left: 110 },
+  CF: { top: 80, left: 410 },
+  RF: { top: 170, left: 717 }
 }
