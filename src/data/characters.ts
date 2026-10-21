@@ -63,7 +63,7 @@ const RAW_CHARACTERS: CharacterItem[] = [
     id: 11
   },
   {
-    name: 'La mona de algenis',
+    name: 'La mona',
     src: '/mario-pelota-team-selector/images/dixie.webp',
     id: 12
   },
@@ -85,12 +85,12 @@ const RAW_CHARACTERS: CharacterItem[] = [
     id: 16
   },
   {
-    name: 'The ñem',
+    name: 'La ñema',
     src: '/mario-pelota-team-selector/images/goomba.webp',
     id: 17
   },
   {
-    name: 'The flying ñem',
+    name: 'La ñema que vuela',
     src: '/mario-pelota-team-selector/images/paragoomba.webp',
     id: 18
   },
@@ -145,7 +145,7 @@ const RAW_CHARACTERS: CharacterItem[] = [
     id: 27
   },
   {
-    name: 'Manoguayabo: La pelicula',
+    name: 'Manoguayabo - La pelicula',
     src: '/mario-pelota-team-selector/images/pianta.webp',
     variant: ['red', 'yellow'],
     id: 28
