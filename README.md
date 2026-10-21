@@ -24,7 +24,7 @@
 
 **Mario Pelota Team Selector** es una aplicación web interactiva diseñada para generar alineaciones y seleccionar equipos de béisbol de forma aleatoria y dinámica al estilo *Mario Superstar Baseball*.
 
-Incluye apodos jocosos y referencias de la cultura popular / pelota dominicana para cada personaje, soporte para variantes de color (Yoshi, Shy Guy, Koopa, Toad, etc.) y una interfaz visual de estadio con enfrentamiento **Team 1 vs Team 2**.
+Incluye apodos jocosos y referencias de la cultura popular / pelota dominicana para cada personaje, soporte para variantes de color (Shy Guy, Koopa, Toad, etc.) y una interfaz visual de estadio con enfrentamiento **Team 1 vs Team 2**.
 
 ---
 

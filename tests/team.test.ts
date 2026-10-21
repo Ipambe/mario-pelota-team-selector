@@ -33,13 +33,22 @@ describe('team logic', () => {
     expect(available).toHaveLength(mockCharacters.length)
   })
 
-  it('excludes assigned characters from available characters', () => {
+  it('excludes assigned characters from available characters by default', () => {
     const team = createEmptyTeam()
     assignPlayerToTeam(team, 'P', char0)
 
     const available = getAvailableCharacters(team, mockCharacters)
     expect(available).toHaveLength(mockCharacters.length - 1)
     expect(available.find(c => c.id === char0.id)).toBeUndefined()
+  })
+
+  it('allows duplicate characters in the same team when allowDuplicatesInTeam is true', () => {
+    const team = createEmptyTeam()
+    assignPlayerToTeam(team, 'P', char0)
+
+    const available = getAvailableCharacters(team, mockCharacters, true)
+    expect(available).toHaveLength(mockCharacters.length)
+    expect(available.find(c => c.id === char0.id)).toBeDefined()
   })
 
   it('filters out occupied positions correctly', () => {

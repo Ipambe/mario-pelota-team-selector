@@ -33,12 +33,18 @@ export function getOccupiedCharacterIds(team: TeamRoster): number[] {
 }
 
 /**
- * Returns the list of characters that have not yet been assigned to the team.
+ * Returns the list of characters available for the team.
+ * If allowDuplicatesInTeam is true, characters already assigned to the team can be selected again.
+ * If allowDuplicatesInTeam is false, occupied characters are excluded.
  */
 export function getAvailableCharacters(
   team: TeamRoster,
-  allCharacters: readonly CharacterItem[]
+  allCharacters: readonly CharacterItem[],
+  allowDuplicatesInTeam = false
 ): CharacterItem[] {
+  if (allowDuplicatesInTeam) {
+    return [...allCharacters]
+  }
   const occupiedIds = getOccupiedCharacterIds(team)
   return allCharacters.filter(item => !occupiedIds.includes(item.id))
 }

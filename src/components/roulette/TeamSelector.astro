@@ -1,33 +1,67 @@
 ---
 ---
 
-<div class="team-switch-container">
+<div class="team-status-container" id="teamStatusContainer" aria-live="polite">
 	<button
 		type="button"
-		id="teamLabel1"
-		class="team-switch-label active"
-		aria-pressed="true"
+		class="mode-indicator-badge"
+		id="modeIndicatorBadge"
+		title="Modo: DRAFT ALTERNADO. Clic para cambiar"
+		aria-label="Modo de selección actual. Haz clic para cambiar de modo"
 	>
-		Equipo 1
+		<span class="mode-badge-text" id="modeBadgeText">DRAFT ALTERNADO</span>
+		<svg
+			class="mode-badge-icon"
+			width="13"
+			height="13"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2.5"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			aria-hidden="true"
+		>
+			<path d="m17 2 4 4-4 4"></path>
+			<path d="M3 6h18"></path>
+			<path d="m7 22-4-4 4-4"></path>
+			<path d="M21 18H3"></path>
+		</svg>
 	</button>
+	<!-- Turno regular (Draft / Secuencial / Turno final) -->
+	<div class="turn-indicator" id="turnIndicator">
+		<span class="turn-label">TURNO:</span>
+		<span class="turn-team-badge team1-active" id="turnTeamBadge">EQUIPO 1</span>
+	</div>
 
-	<label class="switch-toggle team-switch-toggle" for="teamSwitch" title="Alternar entre Equipo 1 y Equipo 2">
-		<input
-			type="checkbox"
-			id="teamSwitch"
-			role="switch"
-			aria-label="Alternar entre Equipo 1 y Equipo 2"
-			aria-checked="false"
-		/>
-		<span class="switch-slider"></span>
-	</label>
-
-	<button
-		type="button"
-		id="teamLabel2"
-		class="team-switch-label"
-		aria-pressed="false"
-	>
-		Equipo 2
-	</button>
+	<!-- Indicador para modo Vecinos (Izquierda y Derecha 2 en 1) -->
+	<div class="neighbors-turn-indicator" id="neighborsTurnIndicator" style="display: none;">
+		<span class="split-side-label split-left team1-active" id="splitSideLeft">IZQUIERDA: EQ 1</span>
+		<button
+			type="button"
+			class="split-toggle-btn"
+			id="splitToggleBtn"
+			title="Invertir asignación de equipos (Izquierda / Derecha)"
+			aria-label="Invertir asignación de equipos para izquierda y derecha"
+		>
+			<svg
+				class="split-toggle-icon"
+				width="14"
+				height="14"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2.5"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				aria-hidden="true"
+			>
+				<path d="m17 2 4 4-4 4"></path>
+				<path d="M3 6h18"></path>
+				<path d="m7 22-4-4 4-4"></path>
+				<path d="M21 18H3"></path>
+			</svg>
+		</button>
+		<span class="split-side-label split-right team2-active" id="splitSideRight">DERECHA: EQ 2</span>
+	</div>
 </div>
