@@ -37,31 +37,7 @@
 	<!-- Indicador para modo Vecinos (Izquierda y Derecha 2 en 1) -->
 	<div class="neighbors-turn-indicator" id="neighborsTurnIndicator" style="display: none;">
 		<span class="split-side-label split-left team1-active" id="splitSideLeft">IZQUIERDA: EQ 1</span>
-		<button
-			type="button"
-			class="split-toggle-btn"
-			id="splitToggleBtn"
-			title="Invertir asignación de equipos (Izquierda / Derecha)"
-			aria-label="Invertir asignación de equipos para izquierda y derecha"
-		>
-			<svg
-				class="split-toggle-icon"
-				width="14"
-				height="14"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2.5"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				aria-hidden="true"
-			>
-				<path d="m17 2 4 4-4 4"></path>
-				<path d="M3 6h18"></path>
-				<path d="m7 22-4-4 4-4"></path>
-				<path d="M21 18H3"></path>
-			</svg>
-		</button>
+		<span class="split-separator" aria-hidden="true">&bull;</span>
 		<span class="split-side-label split-right team2-active" id="splitSideRight">DERECHA: EQ 2</span>
 	</div>
 </div>

@@ -1,8 +1,4 @@
-import type {
-  GameSettings,
-  SelectionMode,
-  SplitSideAssignment
-} from '../types/game'
+import type { GameSettings, SelectionMode } from '../types/game'
 
 export type { GameSettings }
 
@@ -12,19 +8,13 @@ export const DEFAULT_SETTINGS: GameSettings = {
   autoSelect: false,
   allowDuplicatesInTeam: false,
   enableVariants: true,
-  selectionMode: 'alternate',
-  splitSides: 'left1-right2'
+  selectionMode: 'alternate'
 }
 
 export const SELECTION_MODES: readonly SelectionMode[] = [
   'alternate',
   'sequential',
   'neighbors'
-]
-
-const VALID_SPLIT_SIDES: readonly SplitSideAssignment[] = [
-  'left1-right2',
-  'left2-right1'
 ]
 
 /**
@@ -54,10 +44,7 @@ export function loadSettings(): GameSettings {
           : DEFAULT_SETTINGS.enableVariants,
       selectionMode: SELECTION_MODES.includes(parsed.selectionMode)
         ? parsed.selectionMode
-        : DEFAULT_SETTINGS.selectionMode,
-      splitSides: VALID_SPLIT_SIDES.includes(parsed.splitSides)
-        ? parsed.splitSides
-        : DEFAULT_SETTINGS.splitSides
+        : DEFAULT_SETTINGS.selectionMode
     }
   } catch (err) {
     console.warn('Failed to load settings from localStorage:', err)
@@ -77,15 +64,6 @@ export function getNextSelectionMode(
   }
   const nextIndex = (currentIndex + 1) % SELECTION_MODES.length
   return SELECTION_MODES[nextIndex]
-}
-
-/**
- * Toggles the split sides assignment between left1-right2 and left2-right1.
- */
-export function toggleSplitSides(
-  current: SplitSideAssignment
-): SplitSideAssignment {
-  return current === 'left1-right2' ? 'left2-right1' : 'left1-right2'
 }
 
 /**

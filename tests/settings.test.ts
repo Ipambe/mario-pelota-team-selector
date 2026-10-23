@@ -4,8 +4,7 @@ import {
   getNextSelectionMode,
   loadSettings,
   SETTINGS_STORAGE_KEY,
-  saveSettings,
-  toggleSplitSides
+  saveSettings
 } from '../src/logic/settings'
 
 describe('settings logic', () => {
@@ -41,7 +40,6 @@ describe('settings logic', () => {
     expect(settings.allowDuplicatesInTeam).toBe(false)
     expect(settings.enableVariants).toBe(true)
     expect(settings.selectionMode).toBe('alternate')
-    expect(settings.splitSides).toBe('left1-right2')
   })
 
   it('saves and loads settings correctly from localStorage', () => {
@@ -49,15 +47,13 @@ describe('settings logic', () => {
       autoSelect: true,
       allowDuplicatesInTeam: true,
       enableVariants: false,
-      selectionMode: 'sequential',
-      splitSides: 'left2-right1'
+      selectionMode: 'sequential'
     })
     const loaded = loadSettings()
     expect(loaded.autoSelect).toBe(true)
     expect(loaded.allowDuplicatesInTeam).toBe(true)
     expect(loaded.enableVariants).toBe(false)
     expect(loaded.selectionMode).toBe('sequential')
-    expect(loaded.splitSides).toBe('left2-right1')
   })
 
   it('falls back to default values when saved settings contain invalid mode', () => {
@@ -65,14 +61,12 @@ describe('settings logic', () => {
       SETTINGS_STORAGE_KEY,
       JSON.stringify({
         autoSelect: true,
-        selectionMode: 'invalid-mode',
-        splitSides: 'invalid-split'
+        selectionMode: 'invalid-mode'
       })
     )
     const loaded = loadSettings()
     expect(loaded.autoSelect).toBe(true)
     expect(loaded.selectionMode).toBe('alternate')
-    expect(loaded.splitSides).toBe('left1-right2')
   })
 
   it('handles corrupted JSON in localStorage gracefully', () => {
@@ -90,10 +84,5 @@ describe('settings logic', () => {
   it('falls back to alternate if an unknown mode is passed to getNextSelectionMode', () => {
     // @ts-expect-error - testing invalid mode input
     expect(getNextSelectionMode('unknown-mode')).toBe('alternate')
-  })
-
-  it('toggles split sides correctly between left1-right2 and left2-right1', () => {
-    expect(toggleSplitSides('left1-right2')).toBe('left2-right1')
-    expect(toggleSplitSides('left2-right1')).toBe('left1-right2')
   })
 })

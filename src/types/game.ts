@@ -42,12 +42,10 @@ export interface StadiumCoordinates {
 }
 
 export type SelectionMode = 'alternate' | 'sequential' | 'neighbors'
-export type SplitSideAssignment = 'left1-right2' | 'left2-right1'
 
 export interface GameSettings {
   autoSelect: boolean
   allowDuplicatesInTeam: boolean
   enableVariants: boolean
   selectionMode: SelectionMode
-  splitSides: SplitSideAssignment
 }

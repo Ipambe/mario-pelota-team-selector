@@ -75,6 +75,9 @@
 							<span class="settings-option-title">Repetidos en el Mismo Equipo</span>
 							<p class="settings-option-desc">
 								Permite que un personaje pueda elegirse más de una vez dentro de un mismo equipo.
+								<span id="allowDuplicatesBadge" class="settings-locked-badge" style="display: none;">
+									(Activo y requerido en modo Izquierda y Derecha)
+								</span>
 							</p>
 						</div>
 						<label class="switch-toggle" for="allowDuplicatesSwitch" title="Permitir o denegar repetidos en el mismo equipo">
@@ -174,25 +177,6 @@
 								Se entregan los personajes adyacentes al resultante: uno para cada equipo.
 							</p>
 						</div>
-					</label>
-				</div>
-
-				<!-- Sub-opción: Asignación de lados para Vecinos -->
-				<div class="settings-suboption" id="splitSidesContainer">
-					<div class="settings-suboption-info">
-						<span class="settings-suboption-title">Asignación de Lados</span>
-						<p class="settings-suboption-desc" id="splitSidesDesc">
-							Izquierda: Equipo 1 &bull; Derecha: Equipo 2
-						</p>
-					</div>
-					<label class="switch-toggle" for="splitSidesSwitch" title="Alternar asignación de lados">
-						<input
-							type="checkbox"
-							id="splitSidesSwitch"
-							role="switch"
-							aria-label="Alternar asignación de lados: Izquierda para Equipo 1 o Equipo 2"
-						/>
-						<span class="switch-slider"></span>
 					</label>
 				</div>
 			</section>
